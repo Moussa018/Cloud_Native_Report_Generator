@@ -1,6 +1,4 @@
-# 📊 Automated Report Generation
-
-> Pipeline serverless de génération automatique de rapports métiers quotidiens, déployé sur AWS (LocalStack) via Terraform.
+Automated Report Generation
 
 ---
 
@@ -90,6 +88,18 @@ bash scripts/lambda.sh
 ```
 
 ---
+## Simulation d'e-mails (AWS SES)
+
+Dans ce projet, l'envoi d'e-mails via **Amazon SES** est entièrement simulé. Puisque **LocalStack** fonctionne comme un environnement sandbox donc isolé, aucun message ne sera réellement acheminé vers Internet. Cela permet de tester la logique de notification sans configurer de vrais domaines ou risquer d'envoyer des spams durant le développement.
+
+### Vérification de l'envoi
+
+Pour confirmer que la fonction Lambda a correctement déclenché l'envoi du rapport et pour inspecter le contenu du message, vous pouvez interroger l'API SES locale.
+
+Exécutez la commande suivante dans votre terminal :
+
+```bash
+awslocal sesv2 list-emails
 
 ## Variables d'environnement (Lambda)
 
