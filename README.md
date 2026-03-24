@@ -1,41 +1,35 @@
 ## Cloud Native Report Generator
 
-Ce projet automatise la génération de rapports CSV à partir de données de ventes et d'inventaire stockées dans S3. Une fonction AWS Lambda récupère les fichiers source, calcule les statistiques clés (ventes totales, stock, ratio ventes/inventaire), produit un rapport consolidé, le sauvegarde dans un bucket S3 de sortie, et l'envoie par e-mail via Amazon SES.
+This project automates the generation of CSV reports from sales and inventory data stored in S3. An AWS Lambda function retrieves the source files, computes key statistics (total sales, inventory levels, sales-to-inventory ratio), generates a consolidated report, stores it in an output S3 bucket, and sends it via email using Amazon SES.
 
-L'ensemble de l'infrastructure est provisionné avec **Terraform** et testé localement grâce à **LocalStack**.
+The entire infrastructure is provisioned using Terraform and tested locally using LocalStack.
 
 ## Architecture
 
-```
-S3 (data)          Lambda                  S3 (reports)
-────────────  →  ─────────────────────  →  ──────────────
-sales CSV          generate_report()        daily_report_
-inventory CSV      send_email_report()      YYYYMMDD.csv
-                        ↓
-                   SES (email)
-```
+<p align="center">
+  <img src="./schemas.png" alt="Cloud Native Architecture" width="800">
+</p>
 
 
-## Stack technique
+## Tech Stack
+| Component | Technology              |
+| --------- | ----------------------- |
+| Compute   | AWS Lambda (Python 3.9) |
+| Storage   | AWS S3                  |
+| Email     | AWS SES                 |
+| IaC       | Terraform ~5.0          |
+| Local dev | LocalStack + Docker     |
 
-| Composant      | Technologie              |
-|----------------|--------------------------|
-| Compute        | AWS Lambda (Python 3.9)  |
-| Stockage       | AWS S3                   |
-| Email          | AWS SES                  |
-| IaC            | Terraform ~5.0           |
-| Local dev      | LocalStack + Docker       |
 
+## Quick Start
 
-## Lancement rapide
-
-### 1. Démarrer LocalStack
+### 1. Start LocalStack
 
 ```bash
 docker-compose up -d
 ```
 
-### 2. Provisionner l'infrastructure
+### 2. Provision Infrastructure
 
 ```bash
 cd infra
@@ -43,59 +37,60 @@ terraform init
 terraform apply -auto-approve
 ```
 
-### 3. Uploader les données
+### 3.Upload Data
 
 ```bash
 awslocal s3 cp data/samples_sales.csv s3://report-data-storage/sales/samples_sales.csv
 awslocal s3 cp data/samples_data.csv  s3://report-data-storage/inventory/samples_data.csv
 ```
 
-### 4. Invoquer la Lambda
+### 4. Invoke Lambda
 
 ```bash
 bash scripts/lambda.sh
 ```
 
 
-## Structure du projet
+## Project Structure
 
 ```
 .
 ├── app/
-│   └── report_generator.py   # Handler Lambda
+│   └── report_generator.py   # Lambda handler
 ├── data/
-│   ├── samples_sales.csv     # Données de ventes (exemple)
-│   ├── samples_data.csv      # Données d'inventaire (exemple)
-│   └── resultat.csv          # Rapport de sortie (exemple)
+│   ├── samples_sales.csv     # Sample sales data
+│   ├── samples_data.csv      # Sample inventory data
+│   └── resultat.csv          # Output report example
 ├── infra/
-│   ├── provider.tf           # Configuration AWS / LocalStack
-│   ├── infra.tf              # Buckets S3
-│   └── lambda.tf             # Fonction Lambda + rôle IAM
+│   ├── provider.tf           # AWS / LocalStack configuration
+│   ├── infra.tf              # S3 buckets
+│   └── lambda.tf             # Lambda function + IAM role
 ├── scripts/
-│   ├── setup.sh              # Installation Terraform & awslocal
-│   ├── test.sh               # Démarrage complet (LocalStack + Terraform)
-│   └── lambda.sh             # Invocation manuelle de la Lambda
-└── docker-compose.yaml       # LocalStack
+│   ├── setup.sh              # Install Terraform & awslocal
+│   ├── test.sh               # Full startup (LocalStack + Terraform)
+│   └── lambda.sh             # Manual Lambda invocation
+└── docker-compose.yaml       # LocalStack setup
+
 ```
 
-## Simulation d'e-mails (AWS SES)
+## Email Simulation (AWS SES)
 
-Dans ce projet, l'envoi d'e-mails via **Amazon SES** est entièrement simulé. Puisque **LocalStack** fonctionne comme un environnement sandbox donc isolé, aucun message ne sera réellement acheminé vers Internet. Cela permet de tester la logique de notification sans configurer de vrais domaines ou risquer d'envoyer des spams durant le développement.
+In this project, email sending via Amazon SES is fully simulated. Since LocalStack operates as an isolated sandbox environment, no emails are actually sent over the Internet. This allows testing notification logic without configuring real domains or risking spam during development.
 
-### Vérification de l'envoi
+### Verify Email Sending
 
-Pour confirmer que la fonction Lambda a correctement déclenché l'envoi du rapport et pour inspecter le contenu du message, vous pouvez interroger l'API SES locale.
+To confirm that the Lambda function successfully triggered the report email and to inspect its content, you can query the local SES API.
 
-Exécutez la commande suivante dans votre terminal :
+Run the following command :
 
 ```bash
 awslocal sesv2 list-emails
 ```
 
-## Variables d'environnement (Lambda)
+## Lambda Environment Variables
 
-| Variable         | Valeur par défaut        | Description                        |
-|------------------|--------------------------|------------------------------------|
-| `DATA_BUCKET`    | `report-data-storage`    | Bucket contenant les CSV sources   |
-| `REPORTS_BUCKET` | `report-output-storage`  | Bucket de destination des rapports |
-| `EMAIL_ADDRESS`  | *(à configurer)*         | Adresse SES expéditeur/destinataire|
+| Variable         | Default Value           | Description                        |
+| ---------------- | ----------------------- | ---------------------------------- |
+| `DATA_BUCKET`    | `report-data-storage`   | Bucket containing source CSV files |
+| `REPORTS_BUCKET` | `report-output-storage` | Destination bucket for reports     |
+| `EMAIL_ADDRESS`  | *(to configure)*        | SES sender/receiver email address  |
