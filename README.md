@@ -1,7 +1,5 @@
 ## Cloud Native Report Generator
 
-## Description
-
 Ce projet automatise la génération de rapports CSV à partir de données de ventes et d'inventaire stockées dans S3. Une fonction AWS Lambda récupère les fichiers source, calcule les statistiques clés (ventes totales, stock, ratio ventes/inventaire), produit un rapport consolidé, le sauvegarde dans un bucket S3 de sortie, et l'envoie par e-mail via Amazon SES.
 
 L'ensemble de l'infrastructure est provisionné avec **Terraform** et testé localement grâce à **LocalStack**.
